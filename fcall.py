@@ -66,8 +66,8 @@ tools = [
 def execute_function(function_name, args, **kwargs):
     print(function_name, args)
     try:
-        function_to_call = globals()[function_name]
-        result = function_to_call(args)
+        # function_to_call = globals()[function_name]
+        result = function_name(args)
         return result
     except KeyError:
         return f"Function '{function_name}' not found."

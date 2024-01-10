@@ -1,0 +1,26 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "get_todos",
+      "description": "Get the list of todos"
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "add_todos",
+      "description": "Add a new todo",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "msg": {
+            "type": "string",
+            "description": "The task description to add"
+          }
+        },
+        "required": ["msg"]
+      }
+    }
+  }
+]
