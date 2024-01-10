@@ -5,90 +5,114 @@ from src.constants import openai_api_key
 client = OpenAI(
     api_key=openai_api_key,
 )
+messages = [
+    {
+        "role": "system",
+        "content": "You are a helpful assistant that helps the user. Whenever possible try to give the answer without asking for further confirmation from the user.",
+    },
+    {
+        "role": "user",
+        "content": "Add a new todo to buy paper towels tomorrow",
+        # "content": "Tell me a joke",
+    },
+]
+
+todos = []
 
 
-# Example dummy function hard coded to return the same weather
-# In production, this could be your backend API or an external API
-def get_current_weather(location, unit="fahrenheit"):
-    """Get the current weather in a given location"""
-    if "tokyo" in location.lower():
-        return json.dumps({"location": "Tokyo", "temperature": "10", "unit": unit})
-    elif "san francisco" in location.lower():
-        return json.dumps(
-            {"location": "San Francisco", "temperature": "72", "unit": unit}
-        )
-    elif "paris" in location.lower():
-        return json.dumps({"location": "Paris", "temperature": "22", "unit": unit})
-    else:
-        return json.dumps({"location": location, "temperature": "unknown"})
+def get_todos(params=None):
+    return todos
+
+
+def add_todos(params):
+    print(params)
+    params = json.loads(params)
+    msg = params["msg"]
+    try:
+        todos.append({"task": msg, "completed": False})
+        return {"success": True, "message": "Todo added successfully."}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_todos",
+            "description": "Get the list of todos",
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "add_todos",
+            "description": "Add a new todo",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "msg": {
+                        "type": "string",
+                        "description": "The task description to add",
+                    }
+                },
+                "required": ["msg"],
+            },
+        },
+    },
+]
+
+
+def execute_function(function_name, args, **kwargs):
+    print(function_name, args)
+    try:
+        function_to_call = globals()[function_name]
+        result = function_to_call(args)
+        return result
+    except KeyError:
+        return f"Function '{function_name}' not found."
 
 
 def run_conversation():
-    # Step 1: send the conversation and available functions to the model
-    messages = [
-        {
-            "role": "user",
-            "content": "What's the weather like in San Francisco, Tokyo, and Paris?",
-        }
-    ]
-    tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "get_current_weather",
-                "description": "Get the current weather in a given location",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "location": {
-                            "type": "string",
-                            "description": "The city and state, e.g. San Francisco, CA",
-                        },
-                        "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
-                    },
-                    "required": ["location"],
-                },
-            },
-        }
-    ]
     response = client.chat.completions.create(
         model="gpt-3.5-turbo-1106",
         messages=messages,
         tools=tools,
-        tool_choice="auto",  # auto is default, but we'll be explicit
+        tool_choice="auto",
     )
-    response_message = response.choices[0].message
-    tool_calls = response_message.tool_calls
-    # Step 2: check if the model wanted to call a function
-    if tool_calls:
-        # Step 3: call the function
-        # Note: the JSON response may not always be valid; be sure to handle errors
-        available_functions = {
-            "get_current_weather": get_current_weather,
-        }  # only one function in this example, but you can have multiple
-        messages.append(response_message)  # extend conversation with assistant's reply
-        # Step 4: send the info for each function call and function response to the model
-        for tool_call in tool_calls:
-            function_name = tool_call.function.name
-            function_to_call = available_functions[function_name]
-            function_args = json.loads(tool_call.function.arguments)
-            function_response = function_to_call(
-                location=function_args.get("location"),
-                unit=function_args.get("unit"),
-            )
-            messages.append(
-                {
-                    "tool_call_id": tool_call.id,
-                    "role": "tool",
-                    "name": function_name,
-                    "content": function_response,
-                }
-            )  # extend conversation with function response
-        second_response = client.chat.completions.create(
-            model="gpt-3.5-turbo-1106",
-            messages=messages,
-        )  # get a new response from the model where it can see the function response
-        return second_response
+
+    assistant_message = response.choices[0].message
+    print(assistant_message)
+
+    tool_calls = assistant_message.tool_calls
+
+    if not tool_calls:
+        print("no tool calls!")
+        return assistant_message.content
+
+    tool_call = tool_calls[0]
+
+    function_name = tool_call.function.name
+    function_resp = execute_function(function_name, tool_call.function.arguments)
+    messages.append(assistant_message)
+
+    messages.append(
+        {
+            "tool_call_id": tool_call.id,
+            "role": "tool",
+            "name": function_name,
+            "content": json.dumps(function_resp),
+        }
+    )
+    second_response = client.chat.completions.create(
+        model="gpt-3.5-turbo-1106",
+        messages=messages,
+    )
+    response_message = second_response.choices[0].message
+    messages.append(response_message)
+
+    print(response_message)
+    return response_message.content
 
 
 print(run_conversation())
