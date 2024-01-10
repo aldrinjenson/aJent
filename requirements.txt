@@ -1,0 +1,8 @@
+langchain
+langchain_experimental
+langchain_openai
+duckduckgo-search
+google-cloud-speech
+pyaudio
+streamlit
+python-dotenv
