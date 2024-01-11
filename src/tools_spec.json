@@ -10,16 +10,67 @@
     "type": "function",
     "function": {
       "name": "add_todos",
-      "description": "Add a new todo",
+      "description": "Add new todos",
       "parameters": {
         "type": "object",
         "properties": {
-          "msg": {
-            "type": "string",
-            "description": "The task description to add"
+          "todos": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "The task description to add"
+            }
           }
         },
-        "required": ["msg"]
+        "required": ["todos"]
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the todos were added successfully"
+          },
+          "message": {
+            "type": "string",
+            "description": "Additional information or error message"
+          }
+        },
+        "required": ["success", "message"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "complete_todos",
+      "description": "Mark todos as completed",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "indices": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "description": "The index of the todo to mark as completed"
+            }
+          }
+        },
+        "required": ["indices"]
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the todos were marked as completed successfully"
+          },
+          "message": {
+            "type": "string",
+            "description": "Additional information or error message"
+          }
+        },
+        "required": ["success", "message"]
       }
     }
   }

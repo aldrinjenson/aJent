@@ -1,6 +1,14 @@
 import streamlit as st
 
 
+def print_chat_list():
+    for message in st.session_state.messages:
+        if message["role"] == "system":
+            continue
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+
 def streamlit_init():
     st.title("AJent agent")
     if "openai_model" not in st.session_state:
@@ -9,11 +17,25 @@ def streamlit_init():
     if "messages" not in st.session_state:
         st.session_state.messages = [
             {
+                "role": "system",
+                "content": "You are a smart assistant.You help the user. if something is not clear or you need more details, ask the user for it.",
+            },
+            {
                 "role": "assistant",
                 "content": "Hi, I am your friendly neighbourhood asssistant. Ask me to do any actions!",
-            }
+            },
         ]
 
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    print_chat_list()
+
+
+def move_focus():
+    # inspect the html to determine which control to specify to receive focus (e.g. text or textarea).
+    pass
+    # st.components.v1.html(
+    #     f"""
+    #         <script>
+    #             window.scrollTo(0, document.body.scrollHeight);
+    #         </script>
+    #     """,
+    # )

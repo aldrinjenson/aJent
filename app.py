@@ -1,7 +1,7 @@
 from openai import OpenAI
 import streamlit as st
 from src.constants import openai_api_key
-from src.streamlit_utils import streamlit_init
+from src.streamlit_utils import streamlit_init, move_focus
 from src.llm_utils import get_llm_response
 
 
@@ -22,16 +22,8 @@ if prompt := st.chat_input("What is up?"):
             for m in st.session_state.messages
         ]
 
-        print(messages)
         full_response = get_llm_response(messages=messages)
-        print(full_response)
-
-        # for response in client.chat.completions.create(
-        #     model=st.session_state["openai_model"],
-        #     messages=messages,
-        #     stream=True,
-        # ):
-        #     full_response += response.choices[0].delta.content or ""
-        #     message_placeholder.markdown(full_response + "▌")
+        message_placeholder.markdown("▌")
         message_placeholder.markdown(full_response)
+        move_focus()
     st.session_state.messages.append({"role": "assistant", "content": full_response})

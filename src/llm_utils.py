@@ -55,6 +55,8 @@ def get_llm_response(messages):
             "content": json.dumps(function_resp),
         }
     )
+    print(messages)
+    print("making second call")
     second_response = client.chat.completions.create(
         model="gpt-3.5-turbo-1106",
         messages=messages,
@@ -62,5 +64,5 @@ def get_llm_response(messages):
     response_message = second_response.choices[0].message
     messages.append(response_message)
 
-    print(response_message)
+    print(messages)
     return response_message.content
