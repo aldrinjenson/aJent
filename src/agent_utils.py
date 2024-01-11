@@ -1,3 +1,4 @@
+import streamlit as st
 import json
 from src.custom_functions import (
     functions_available,
@@ -16,19 +17,16 @@ from langchain.tools import DuckDuckGoSearchRun
 from langchain.prompts import MessagesPlaceholder
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain.agents import AgentExecutor
+from langchain.tools import WikipediaQueryRun
+from langchain_community.utilities import WikipediaAPIWrapper
 
 MEMORY_KEY = "chat_history"
 
 llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, openai_api_key=openai_api_key)
 search = DuckDuckGoSearchRun()
+wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
 
 chat_history = []
-
-
-@tool
-def get_word_length(word: str) -> int:
-    """Returns the length of a word."""
-    return len(word)
 
 
 prompt = ChatPromptTemplate.from_messages(
@@ -44,7 +42,7 @@ prompt = ChatPromptTemplate.from_messages(
 )
 
 
-tools = [get_word_length, search, get_todos, complete_todos, add_todos]
+tools = [wikipedia, search, get_todos, complete_todos, add_todos]
 llm_with_tools = llm.bind(functions=[format_tool_to_openai_function(t) for t in tools])
 
 agent = (
@@ -59,30 +57,36 @@ agent = (
     | llm_with_tools
     | OpenAIFunctionsAgentOutputParser()
 )
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
-
-# input1 = "What is the latest movie playing in Bangalore theaters?"
-# result = agent_executor.invoke({"input": input1, "chat_history": chat_history})
-# chat_history.extend(
-#     [
-#         HumanMessage(content=input1),
-#         AIMessage(content=result["output"]),
-#     ]
-# )
-# for c in chat_history:
-#     print(c)
-#     print(type(c))
-#     print(c.type)
-
-# print(chat_history)
-# print(result["output"])
-# agent_executor.invoke(
-#     {"input": "Add a new todo to watch this on 16th Jan", "chat_history": chat_history}
-# )
+agent_executor = AgentExecutor(
+    agent=agent, tools=tools, verbose=True, return_intermediate_steps=True
+)
 
 
 def get_agent_response(prompt, chat_history):
     print(prompt, chat_history)
-    result = agent_executor.invoke({"input": prompt, "chat_history": chat_history})
-    print(result)
-    return result["output"]
+    thought_process_placeholder = st.empty()
+    full_thought = ""
+    thought_expander = st.expander("Thought process")
+
+    def slog(msg):
+        thought_expander.markdown(msg + "▌")
+
+    for chunk in agent_executor.stream({"input": prompt, "chat_history": chat_history}):
+        print(chunk)
+        if "actions" in chunk:
+            for action in chunk["actions"]:
+                slog(
+                    f"##### Calling Tool ```{action.tool}``` Input:\n```{action.tool_input}```"
+                )
+                # Observation
+        elif "steps" in chunk:
+            for step in chunk["steps"]:
+                slog(f"##### Got result: \n```{step.observation}```")
+        # Final result
+        elif "output" in chunk:
+            slog(f"\nOutput received")
+            print(chunk)
+            return chunk["output"]
+        else:
+            raise ValueError
+        print("------")

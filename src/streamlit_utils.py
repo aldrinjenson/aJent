@@ -18,7 +18,7 @@ def streamlit_init():
         st.session_state.messages = [
             {
                 "role": "system",
-                "content": "You are a smart assistant.You help the user. if something is not clear or you need more details, ask the user for it.",
+                "content": "You are a smart assistant.You help the user. if something is not clear or you need more details, ask the user for it. Answer the user in concise helpful manner. Don't put too much data to the user. You can use markdown to respond if necessary",
             },
             {
                 "role": "assistant",
