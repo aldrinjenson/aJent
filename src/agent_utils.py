@@ -24,7 +24,7 @@ from langchain_community.agent_toolkits import FileManagementToolkit
 from langchain.tools import ShellTool
 
 
-llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, openai_api_key=openai_api_key)
+llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.1, openai_api_key=openai_api_key)
 search = DuckDuckGoSearchRun()
 wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
 shell_tool = ShellTool()
@@ -63,12 +63,16 @@ agent = (
     | OpenAIFunctionsAgentOutputParser()
 )
 agent_executor = AgentExecutor(
-    agent=agent, tools=tools, verbose=True, return_intermediate_steps=True
+    temperature=0.1,
+    agent=agent,
+    tools=tools,
+    verbose=True,
+    return_intermediate_steps=True,
 )
 
 
 def get_agent_response(prompt, chat_history):
-    print(prompt, chat_history)
+    # print(prompt, chat_history)
     thought_process_placeholder = st.empty()
     thought_expander = st.expander("Thought process")
 

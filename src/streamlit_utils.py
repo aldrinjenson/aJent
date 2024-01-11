@@ -10,7 +10,7 @@ def print_chat_list():
 
 
 def streamlit_init():
-    st.title("AJent agent")
+    st.title("AJent - AJ's custom agent")
     if "openai_model" not in st.session_state:
         st.session_state["openai_model"] = "gpt-3.5-turbo"
 
