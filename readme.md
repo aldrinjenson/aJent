@@ -1,6 +1,12 @@
 # aJent: AJ's smart agent :)
 
-**aJent** is an intelligent personal assistant designed to perform a wide range of tasks using very simple natural language input and output.
+**aJent** is an intelligent personal assistant - designed to make you more productive by gathering data and automating the boring actions using just simple natural langage ✨
+
+## Demo
+
+https://github.com/aldrinjenson/aJent/assets/53407417/10a77f75-1700-4e69-9406-caead50e6dc2
+
+Check: [Demo Video](./demo.mp4)
 
 This project was made as a prototype to explore GPT agents.
 Currently custom functions have been added to add and manipulate todo information.
@@ -22,9 +28,6 @@ The aJent will intelligently decide when to use what functionality - hence being
 
 - **Custom GPT Functionality:** Utilize openAI based functions to add even more custom functionalities to add more custom actions like managing todos.
 
-## Demo
-
-Check: [Demo Video](./demo.mp4)
 
 ## Technologies Used
 
@@ -50,10 +53,6 @@ Check: [Demo Video](./demo.mp4)
 
 Contributions are welcome! Feel free to fork the repository and submit pull requests.
 
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
 ---
 
-_What a time to be alive! Elevate your productivity with aJent - Your Smart Assistant._
+_What a time to be alive!_
