@@ -6,7 +6,7 @@ from src.custom_functions import (
     complete_todos,
     get_todos,
 )
-from src.constants import openai_api_key
+from src.constants import openai_api_key, MEMORY_KEY
 from langchain_openai import ChatOpenAI
 from langchain.agents import tool
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -19,21 +19,29 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain.agents import AgentExecutor
 from langchain.tools import WikipediaQueryRun
 from langchain_community.utilities import WikipediaAPIWrapper
+from tempfile import TemporaryDirectory
+from langchain_community.agent_toolkits import FileManagementToolkit
+from langchain.tools import ShellTool
 
-MEMORY_KEY = "chat_history"
 
 llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, openai_api_key=openai_api_key)
 search = DuckDuckGoSearchRun()
 wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
+shell_tool = ShellTool()
+
+shell_tool.description = shell_tool.description + f"args {shell_tool.args}".replace(
+    "{", "{{"
+).replace("}", "}}")
+
+tools = [wikipedia, search, shell_tool, get_todos, complete_todos, add_todos]
+llm_with_tools = llm.bind(functions=[format_tool_to_openai_function(t) for t in tools])
 
 chat_history = []
-
-
 prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "You are very powerful assistant, but bad at calculating lengths of words.",
+            "You are very powerful assistant, who uses tools when in doubt to help the user. You can open files and play movies using linux tools.",
         ),
         MessagesPlaceholder(variable_name=MEMORY_KEY),
         ("user", "{input}"),
@@ -41,9 +49,6 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-
-tools = [wikipedia, search, get_todos, complete_todos, add_todos]
-llm_with_tools = llm.bind(functions=[format_tool_to_openai_function(t) for t in tools])
 
 agent = (
     {
@@ -65,7 +70,6 @@ agent_executor = AgentExecutor(
 def get_agent_response(prompt, chat_history):
     print(prompt, chat_history)
     thought_process_placeholder = st.empty()
-    full_thought = ""
     thought_expander = st.expander("Thought process")
 
     def slog(msg):
@@ -78,15 +82,13 @@ def get_agent_response(prompt, chat_history):
                 slog(
                     f"##### Calling Tool ```{action.tool}``` Input:\n```{action.tool_input}```"
                 )
-                # Observation
         elif "steps" in chunk:
             for step in chunk["steps"]:
                 slog(f"##### Got result: \n```{step.observation}```")
-        # Final result
         elif "output" in chunk:
             slog(f"\nOutput received")
             print(chunk)
+            print()
             return chunk["output"]
         else:
             raise ValueError
-        print("------")
